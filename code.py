@@ -1,176 +1,174 @@
-''' ----------note:----------
-    -the code itself only 97 
-    ----lines if we remove---
-    --the comments and empty-
-    ----------lines----------
-    -I only did this to make-
-    -the code more readable--
-    -----and look better-----'''
+import pygame
+import math
+import time
 
+# pygame setup
+pygame.init()
+font = pygame.font.Font(None, 36)
+screen = pygame.display.set_mode((1280, 720))
+clock = pygame.time.Clock()
+running = True
+dt = 0
 
-import time as t
-from cryptography.fernet import Fernet as F
+# Initialize player positions
+player1_pos = pygame.Vector2(150, 200)  # White player
+player2_pos = pygame.Vector2(1150, 700)  # Red player
 
-# File paths
-file_name = "PASSWORD MANAGER/data.txt"
-key_file_name = "PASSWORD MANAGER/key.key"
+# Initialize scores
+white_score = 0
+red_score = 0
 
-# Master key (used for accessing the password manager :)
-master_key = 123
+# Initialize timers
+white_player_start_time = time.time()
 
-# Load or generate encryption key
-def load_or_generate_key():
-    
-    try:
-        # Try to load the key from the file
-    
-        with open(key_file_name, "rb") as key_file:
-            key = key_file.read()
-    
-    except FileNotFoundError:
-        # If the key file does not exist, generate a new key
-        key = F.generate_key()
-        # Save the key to the file for future use
-    
-        with open(key_file_name, "wb") as key_file:
-            key_file.write(key)
-    
-    return key
+# Define walls as rectangles
+walls = [
+    pygame.Rect(100, 100, 300, 10),   # Horizontal wall
+    pygame.Rect(100, 100, 300, 10),   # Horizontal wall
+    pygame.Rect(100, 100, 300, 10),   # Horizontal wall
+    pygame.Rect(100, 100, 10, 200),   # Vertical wall
+    pygame.Rect(200, 200, 200, 10),   # Horizontal wall
+    pygame.Rect(400, 100, 10, 110),   # Vertical wall
+    pygame.Rect(100, 300, 110, 10),   # Horizontal wall
+    pygame.Rect(200, 300, 10, 100),   # Vertical wall
+    pygame.Rect(300, 300, 10, 100),   # Vertical wall
+    pygame.Rect(300, 400, 200, 10),   # Horizontal wall
+    pygame.Rect(500, 200, 10, 210),   # Vertical wall
+    pygame.Rect(500, 200, 150, 10),   # Horizontal wall
+    pygame.Rect(650, 100, 10, 110),   # Vertical wall
+    pygame.Rect(550, 300, 200, 10),   # Horizontal wall
+    pygame.Rect(650, 300, 10, 150),   # Vertical wall
+    pygame.Rect(600, 450, 110, 10),   # Horizontal wall
+    pygame.Rect(800, 100, 10, 260),   # Vertical wall
+    pygame.Rect(700, 350, 110, 10),   # Horizontal wall
+    pygame.Rect(850, 200, 220, 10),   # Horizontal wall
+    pygame.Rect(950, 300, 10, 110),   # Vertical wall
+    pygame.Rect(850, 400, 110, 10),   # Horizontal wall
+    pygame.Rect(950, 400, 10, 210),   # Vertical wall
+    pygame.Rect(850, 600, 110, 10),   # Horizontal wall
+    pygame.Rect(1050, 100, 10, 210),  # Vertical wall
+    pygame.Rect(1050, 100, 170, 10),  # Horizontal wall
+    pygame.Rect(1150, 200, 70, 10),   # Horizontal wall
+    pygame.Rect(1150, 200, 10, 100),  # Vertical wall
+    pygame.Rect(1050, 300, 170, 10),  # Horizontal wall
+    pygame.Rect(1050, 400, 170, 10),  # Horizontal wall
+    pygame.Rect(1150, 500, 70, 10),   # Horizontal wall
+    pygame.Rect(1150, 400, 10, 100),  # Vertical wall
+    pygame.Rect(1050, 500, 10, 110),  # Vertical wall
+    pygame.Rect(1050, 600, 170, 10),  # Horizontal wall
+]
 
-# Initialize cipher suite with the loaded key
-key = load_or_generate_key()
-cipher_suite = F(key)
+while running:
+    # poll for events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
 
-# Encryption and decryption functions
-def encrypt_password(password, cipher_suite):
-    
-    return cipher_suite.encrypt(password.encode()).decode()
+    # fill the screen with a color to wipe away anything from last frame
+    screen.fill("black")
 
-def decrypt_password(encrypted_password, cipher_suite):
-    
-    try:
-        return cipher_suite.decrypt(encrypted_password.encode()).decode()
-    
-    except Exception as e:
-        print(f"Failed to decrypt password: {e}")
-        return None
+    # Drawing the walls
+    for wall in walls:
+        pygame.draw.rect(screen, "gray", wall)
 
-def view():
-    
-    data = read_from_file()
-    lines = data.splitlines()  # Split the data into individual lines
-    
-    print("Name🔽,   Password🔽")
-    
-    for line in lines:
-    
-        if line.strip():  # Skip empty lines
-    
-            name, encrypted_passw = line.split("|")  # Split each line into name and encrypted password
-            decrypted_passw = decrypt_password(encrypted_passw, cipher_suite)
-    
-            if decrypted_passw:
-    
-                data_to_display = f"\n{name} | {decrypted_passw}"
-                print(data_to_display)
-# Function to write encrypted password data to file
-def write_in_file(name, passw):
-    
-    passw = encrypt_password(passw, cipher_suite)
-    with open(file_name, "a") as file:
-    
-        data_to_be_written = name + "|" + passw + "\n"
-        file.write(data_to_be_written)
+    # Drawing the players as circles
+    pygame.draw.circle(screen, "white", player1_pos, 20)
+    pygame.draw.circle(screen, "red", player2_pos, 20)
 
-# Function to read encrypted password data from file
-def read_from_file():
-    
-    with open(file_name, "r") as file:
-    
-        data = file.read()
-        return data
-    
-def remove_password():
-    
-    view()
-    
-    service_name = input("Which password to remove : ")
-    # Read all lines from the file
-    with open(file_name, "r") as file:
-        lines = file.readlines()
-    
-    # Find the line to remove
-    for line in lines:
-    
-        if line.startswith(service_name + "|"):
-    
-            lines.remove(line)
-            break
-    
-    print("Here is an updated version of the data.")
-    view()
-    
-    # Write the updated list of lines back to the file
-    with open(file_name, "w") as file:
-        file.writelines(lines)
-# Function to display all stored passwords
+    # Moving player 1 (controlled by WASD keys)
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_w]:
+        player1_pos.y -= 300 * dt
+    if keys[pygame.K_s]:
+        player1_pos.y += 300 * dt
+    if keys[pygame.K_a]:
+        player1_pos.x -= 300 * dt
+    if keys[pygame.K_d]:
+        player1_pos.x += 300 * dt
 
-# Function to add a new password
-def add():
-    
-    name = input("Enter the name of the password: ")
-    passw = input(f"Enter the password for {name}: ")
-    write_in_file(name, passw)
-    print("Here is an updated version of the data.")
-    view()
+    # Moving player 2 (controlled by Arrow keys)
+    if keys[pygame.K_UP]:
+        player2_pos.y -= 300 * dt
+    if keys[pygame.K_DOWN]:
+        player2_pos.y += 300 * dt
+    if keys[pygame.K_LEFT]:
+        player2_pos.x -= 300 * dt
+    if keys[pygame.K_RIGHT]:
+        player2_pos.x += 300 * dt
 
-# Secondary menu to choose between viewing, adding, or removing passwords
-def secondary_main():
-    
-    choice = int(input("\n1. View\n2. Add\n3. Remove\n0. Exit\n\n:- "))
-    
-    if choice == 0:
-        print("Bye.👋")
-    
-    elif choice == 1:
-        view()
-    
-    elif choice == 2:
-        add()
-    
-    elif choice == 3:
-        remove_password()
+    # Implementing the bounding box for player 1
+    if player1_pos.x - 20 < 0:
+        player1_pos.x = 20
+    if player1_pos.x + 20 > screen.get_width():
+        player1_pos.x = screen.get_width() - 20
+    if player1_pos.y - 20 < 0:
+        player1_pos.y = 20
+    if player1_pos.y + 20 > screen.get_height():
+        player1_pos.y = screen.get_height() - 20
 
+    # Implementing the bounding box for player 2
+    if player2_pos.x - 20 < 0:
+        player2_pos.x = 20
+    if player2_pos.x + 20 > screen.get_width():
+        player2_pos.x = screen.get_width() - 20
+    if player2_pos.y - 20 < 0:
+        player2_pos.y = 20
+    if player2_pos.y + 20 > screen.get_height():
+        player2_pos.y = screen.get_height() - 20
 
-def countdown_timer(seconds):
-    for remaining in range(seconds, 0, -1):
-        print(f"Time remaining: {remaining} seconds", end='\r')
-        t.sleep(1)
-    print("You can try again now!    ")  # To clear the line after countdown
+    # Collision detection with walls for player 1
+    player1_rect = pygame.Rect(player1_pos.x - 20, player1_pos.y - 20, 40, 40)
+    for wall in walls:
+        if player1_rect.colliderect(wall):
+            # Basic collision response: move back to the previous position
+            if keys[pygame.K_w]:
+                player1_pos.y += 300 * dt
+            if keys[pygame.K_s]:
+                player1_pos.y -= 300 * dt
+            if keys[pygame.K_a]:
+                player1_pos.x += 300 * dt
+            if keys[pygame.K_d]:
+                player1_pos.x -= 300 * dt
 
-def primary_main():
-    countdown_time = 60
-    attempts_remaining = 3
-    
-    while attempts_remaining > 0:
-        attempts_remaining -= 1
-        entered_key = int(input("Please enter the master key: "))
-    
-        if entered_key == master_key:
-            secondary_main()
-            break
-        else:
-            print("Wrong key!")
-    
-        if attempts_remaining == 0:
-            print("You have entered the wrong key too many times.")
-            countdown_timer(countdown_time)
+    # Collision detection with walls for player 2
+    player2_rect = pygame.Rect(player2_pos.x - 20, player2_pos.y - 20, 40, 40)
+    for wall in walls:
+        if player2_rect.colliderect(wall):
+            # Basic collision response: move back to the previous position
+            if keys[pygame.K_UP]:
+                player2_pos.y += 300 * dt
+            if keys[pygame.K_DOWN]:
+                player2_pos.y -= 300 * dt
+            if keys[pygame.K_LEFT]:
+                player2_pos.x += 300 * dt
+            if keys[pygame.K_RIGHT]:
+                player2_pos.x -= 300 * dt
 
-# The rest of your code would go here...
+    # Check if players are touching
+    distance = math.sqrt((player1_pos.x - player2_pos.x) ** 2 + (player1_pos.y - player2_pos.y) ** 2)
+    if distance <= 40:  # 40 is the sum of the radii of both players
+        red_score += 1
+        player1_pos = pygame.Vector2(150, 200)  # White player
+        player2_pos = pygame.Vector2(1150, 700)  # Red player
+        white_player_start_time = time.time()  # Reset white player's survival time
 
-                
-# Entry point of the program
-if __name__ == "__main__":
-    
-    print("Welcome to the Password manager!\n")
-    primary_main()
+    # Check if the white player has survived for 30 seconds
+    if time.time() - white_player_start_time >= 10:
+        white_score += 1
+        white_player_start_time = time.time()  # Reset timer
+    survival_time = int(time.time() - white_player_start_time)
+    timer_text = font.render(f"White Player Survival Time: {survival_time}s", True, "white")
+    screen.blit(timer_text, (10, 50))
+    score_text = font.render(f"White Player: {white_score}  Red Player: {red_score}", True, "white")
+    screen.blit(score_text, (10, 10))
+    # Check for game end condition
+    if white_score >= 10 or red_score >= 10:
+        running = False
+
+    # flip() the display to put your work on screen
+    pygame.display.flip()
+
+    # limits FPS to 60
+    dt = clock.tick(60) / 1000
+
+pygame.quit()
